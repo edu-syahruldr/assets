@@ -476,7 +476,6 @@ function NoMercy:Window(GuiConfig)
     GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
-
     CURRENT_VERSION        = GuiConfig.Version
     LoadConfigFromFile()
 
@@ -886,7 +885,7 @@ function NoMercy:Window(GuiConfig)
         MainButton.Size = UDim2.new(0, 40, 0, 40)
         MainButton.Position = UDim2.new(0, 20, 0, 100)
         MainButton.BackgroundTransparency = 1
-        MainButton.Image = "rbxassetid://" .. GuiConfig.Image
+        -- MainButton.Image = "rbxassetid://" .. GuiConfig.Image
         MainButton.ScaleType = Enum.ScaleType.Fit
 
         local UICorner = Instance.new("UICorner")
@@ -897,7 +896,7 @@ function NoMercy:Window(GuiConfig)
         Button.Parent = MainButton
         Button.Size = UDim2.new(1, 0, 1, 0)
         Button.BackgroundTransparency = 1
-        Button.Text = "a"
+        Button.Text = ""
 
         Button.MouseButton1Click:Connect(function()
             if DropShadowHolder then
