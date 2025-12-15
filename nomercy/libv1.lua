@@ -897,7 +897,7 @@ function NoMercy:Window(GuiConfig)
         Button.Parent = MainButton
         Button.Size = UDim2.new(1, 0, 1, 0)
         Button.BackgroundTransparency = 1
-        Button.Text = ""
+        Button.Text = "a"
 
         Button.MouseButton1Click:Connect(function()
             if DropShadowHolder then
