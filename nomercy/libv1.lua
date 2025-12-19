@@ -16,6 +16,7 @@ local ConfigFile = "NoMercy/cfg/@" .. gameName .. ".json"
 ConfigData       = {}
 Elements         = {}
 CURRENT_VERSION  = nil
+_G.NoMercyLibLoaded = _G.NoMercyLibLoaded or false
 
 function SaveConfig()
     if writefile then
@@ -271,6 +272,11 @@ function NoMercy:MakeNotify(NotifyConfig)
     NotifyConfig.Delay = NotifyConfig.Delay or 5
     local NotifyFunction = {}
     spawn(function()
+        -- Prevent notification spam during initial load
+        if not _G.NoMercyLibLoaded then
+            return
+        end
+        
         if not CoreGui:FindFirstChild("NotifyGui") then
             local NotifyGui = Instance.new("ScreenGui");
             NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -864,7 +870,7 @@ function NoMercy:Window(GuiConfig)
         end)
     end)
 
-    local ToggleKey = Enum.KeyCode.F3
+    local ToggleKey = Enum.KeyCode.X
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == ToggleKey then
@@ -885,7 +891,9 @@ function NoMercy:Window(GuiConfig)
         MainButton.Size = UDim2.new(0, 40, 0, 40)
         MainButton.Position = UDim2.new(0, 20, 0, 100)
         MainButton.BackgroundTransparency = 1
-        -- MainButton.Image = "rbxassetid://" .. GuiConfig.Image
+        if GuiConfig.Image then
+            MainButton.Image = "rbxassetid://" .. GuiConfig.Image
+        end
         MainButton.ScaleType = Enum.ScaleType.Fit
 
         local UICorner = Instance.new("UICorner")
