@@ -9,6 +9,7 @@ local HttpService: HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
 if typeof(clonefunction) == "function" then
+
     local
         isfolder_copy,
         isfile_copy,
@@ -498,10 +499,9 @@ local SaveManager = {} do
 
         self.AutoloadConfigLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
-        -- JSON Copy/Paste Section
         section:AddDivider()
 
-        section:AddButton("Copy Config", function()
+        section:AddButton("Export Config", function()
             local name = self.Library.Options.SaveManager_ConfigList.Value
             if not name then
                 self.Library:Notify("No config selected!", 2)
@@ -536,14 +536,13 @@ local SaveManager = {} do
             end
         end)
 
-        local importJson = ""
         section:AddInput("SaveManager_ImportJson", {
-            Text = "Paste Config JSON",
-            Placeholder = "Paste JSON here...",
-            Finished = true,
-            Callback = function(val) importJson = val end
+            Text = "Import Config",
+            Placeholder = "Paste JSON here",
         })
-        section:AddButton("Load from Input", function()
+        section:AddButton("Import Config", function()
+            local importJson = self.Library.Options.SaveManager_ImportJson and 
+                               self.Library.Options.SaveManager_ImportJson.Value or ""
             if importJson == "" then
                 self.Library:Notify("No JSON to import!", 2)
                 return
