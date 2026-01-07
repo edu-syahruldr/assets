@@ -1,3 +1,4 @@
+print("Library: Save Manager")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
@@ -211,6 +212,37 @@ function SessionManager:BuildConfigSection(tab, onSessionLoad)
     end
 
     return section
+end
+
+SessionManager.AutoSaveThread = nil
+SessionManager.AutoSaveInterval = 2
+SessionManager.GetSessionData = nil
+
+function SessionManager:StartAutoSave(getDataCallback)
+    self.GetSessionData = getDataCallback
+
+    if self.AutoSaveThread then task.cancel(self.AutoSaveThread) end
+
+    self.AutoSaveThread = task.spawn(function()
+        while true do
+            task.wait(self.AutoSaveInterval)
+
+            if self.GetSessionData then
+                local data = self.GetSessionData()
+                if data and data.username then
+                    self:SaveSession(data.username, data.targetEarning or 0,
+                                     data.totalEarned or 0, data.cycleCount or 0)
+                end
+            end
+        end
+    end)
+end
+
+function SessionManager:StopAutoSave()
+    if self.AutoSaveThread then
+        task.cancel(self.AutoSaveThread)
+        self.AutoSaveThread = nil
+    end
 end
 
 SessionManager:BuildFolder()
