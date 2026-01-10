@@ -1,4 +1,3 @@
-print("Library: save manager")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
@@ -150,10 +149,9 @@ function SessionManager:BuildConfigSection(tab, onSessionLoad)
                     onSessionLoad(session, selected)
                 end
                 self.Library:Notify(string.format(
-                                        "Loaded session: %s\nTarget: %s | Earned: %s | Cycles: %d",
+                                        "Loaded session: %s\nRemaining: %s | Cycles: %d",
                                         selected,
-                                        tostring(session.targetEarning),
-                                        tostring(session.totalEarned),
+                                        tostring(session.remainingTarget),
                                         session.cycleCount), 4)
             else
                 self.Library:Notify("No session found for: " .. selected, 2)
@@ -209,7 +207,9 @@ function SessionManager:BuildConfigSection(tab, onSessionLoad)
 
         if onSessionLoad then
             onSessionLoad(session, username)
-            self.Library:Notify("Auto-loaded session for: " .. username, 3)
+            self.Library:Notify("Auto-loaded session for: " .. username ..
+                                    "\nRemaining: " ..
+                                    tostring(session.remainingTarget), 3)
         end
     else
         section:AddLabel("No previous session found")
