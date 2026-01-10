@@ -1,14 +1,15 @@
-print("Library: Save Manager")
+print("Library: save manager")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 local SessionManager = {}
-SessionManager.Folder = "CDID"
-SessionManager.FilePath = "CDID/player.json"
+SessionManager.Folder = "AroelHub/CDID"
+SessionManager.FilePath = "AroelHub/CDID/player.json"
 SessionManager.Data = {players = {}}
 SessionManager.Library = nil
 
 function SessionManager:BuildFolder()
+    if not isfolder("AroelHub") then makefolder("AroelHub") end
     if not isfolder(self.Folder) then makefolder(self.Folder) end
 end
 
@@ -61,10 +62,11 @@ function SessionManager:PlayerExists(username)
     return self.Data.players[username] ~= nil
 end
 
-function SessionManager:SaveSession(username, targetEarning, totalEarned,
-                                    cycleCount)
+function SessionManager:SaveSession(username, targetEarning, remainingTarget,
+                                    totalEarned, cycleCount)
     local sessionData = {
-        targetEarning = targetEarning or 0,
+        targetEarning = targetEarning or 0, -- This is original target
+        remainingTarget = remainingTarget or 0,
         totalEarned = totalEarned or 0,
         cycleCount = cycleCount or 0,
         lastSession = os.date("%Y-%m-%dT%H:%M:%S")
@@ -79,6 +81,7 @@ function SessionManager:LoadSession(username)
     if data then
         return {
             targetEarning = data.targetEarning or 0,
+            remainingTarget = data.remainingTarget or 0,
             totalEarned = data.totalEarned or 0,
             cycleCount = data.cycleCount or 0,
             lastSession = data.lastSession or "Unknown"
@@ -164,7 +167,8 @@ function SessionManager:BuildConfigSection(tab, onSessionLoad)
             if onSessionLoad and onSessionLoad("GET_CURRENT") then
                 local current = onSessionLoad("GET_CURRENT")
                 self:SaveSession(localPlayerName, current.targetEarning,
-                                 current.totalEarned, current.cycleCount)
+                                 current.remainingTarget, current.totalEarned,
+                                 current.cycleCount)
                 self.Library:Notify("Session saved for: " .. localPlayerName, 2)
 
                 -- Refresh dropdown
@@ -231,6 +235,7 @@ function SessionManager:StartAutoSave(getDataCallback)
                 local data = self.GetSessionData()
                 if data and data.username then
                     self:SaveSession(data.username, data.targetEarning or 0,
+                                     data.remainingTarget or 0,
                                      data.totalEarned or 0, data.cycleCount or 0)
                 end
             end
