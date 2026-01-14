@@ -1,9 +1,10 @@
+print("Session Manager Loaded")
 local SessionManager = {}
 SessionManager.__index = SessionManager
 
 SessionManager.CURRENT_VERSION = 1
-SessionManager.BASE_FOLDER = "AroelHub"
-SessionManager.SESSIONS_FOLDER = "AroelHub/sessions"
+SessionManager.BASE_FOLDER = "workspace"
+SessionManager.SESSIONS_FOLDER = "workspace/AroelHub"
 SessionManager.AUTO_SAVE_INTERVAL = 300
 
 local HttpService = game:GetService("HttpService")
