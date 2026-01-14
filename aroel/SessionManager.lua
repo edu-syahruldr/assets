@@ -1,10 +1,8 @@
-print("Session Manager Loaded")
 local SessionManager = {}
 SessionManager.__index = SessionManager
 
 SessionManager.CURRENT_VERSION = 1
-SessionManager.BASE_FOLDER = "workspace"
-SessionManager.SESSIONS_FOLDER = "workspace/AroelHub"
+SessionManager.BASE_FOLDER = "sessions"
 SessionManager.AUTO_SAVE_INTERVAL = 300
 
 local HttpService = game:GetService("HttpService")
@@ -14,38 +12,19 @@ SessionManager.CurrentUserId = nil
 SessionManager.GetDataCallback = nil
 
 function SessionManager:Init()
-    local success = pcall(function()
-        if not isfolder then
-            warn("[SessionManager] File system not supported by executor")
-            return false
-        end
-
+    pcall(function()
         if not isfolder(self.BASE_FOLDER) then
             makefolder(self.BASE_FOLDER)
         end
-
-        if not isfolder(self.SESSIONS_FOLDER) then
-            makefolder(self.SESSIONS_FOLDER)
-        end
     end)
-
-    if success then
-        return true
-    else
-        warn("[SessionManager] Initialization failed - file ops not available")
-        return false
-    end
+    return true
 end
 
 function SessionManager:ValidateUserId(userId)
     local numericId = tonumber(userId)
-
     if not numericId then return nil, "userId must be numeric" end
-
     if numericId <= 0 then return nil, "userId must be positive" end
-
     if numericId % 1 ~= 0 then return nil, "userId must be integer" end
-
     return numericId, nil
 end
 
@@ -61,7 +40,6 @@ function SessionManager:ValidateData(data)
         if data[field] == nil then
             return false, "Missing required field: " .. field
         end
-
         if type(data[field]) ~= "number" then
             return false, "Field must be number: " .. field
         end
@@ -99,50 +77,12 @@ function SessionManager:ValidateData(data)
 end
 
 function SessionManager:GetFilePath(userId)
-    return string.format("%s/player_%d.json", self.SESSIONS_FOLDER, userId)
-end
-
-function SessionManager:CreateBackup(filePath)
-    if not isfile or not readfile or not writefile then return false end
-
-    if not isfile(filePath) then return true end
-
-    local success = pcall(function()
-        local content = readfile(filePath)
-        local backupPath = filePath .. ".backup"
-        writefile(backupPath, content)
-    end)
-
-    if not success then
-        warn("[SessionManager] Backup creation failed (non-critical)")
-    end
-
-    return success
-end
-
-function SessionManager:RestoreFromBackup(filePath)
-    if not isfile or not readfile or not writefile then return false end
-
-    local backupPath = filePath .. ".backup"
-
-    if not isfile(backupPath) then
-        warn("[SessionManager] No backup file found")
-        return false
-    end
-
-    local success = pcall(function()
-        local backupContent = readfile(backupPath)
-        writefile(filePath, backupContent)
-    end)
-
-    if not success then warn("[SessionManager] Backup restoration failed") end
-
-    return success
+    return string.format("%s/player_%d.json", self.BASE_FOLDER, userId)
 end
 
 function SessionManager:Save(userId, data)
 
-    if not writefile or not readfile or not isfile then
+    if not writefile or not isfile then
         return false, "File system not supported"
     end
 
@@ -175,55 +115,14 @@ function SessionManager:Save(userId, data)
     end
 
     local filePath = self:GetFilePath(safeUserId)
-    self:CreateBackup(filePath)
-
-    local tempPath = filePath .. ".tmp"
 
     local writeSuccess, writeError = pcall(function()
-        writefile(tempPath, encoded)
+        writefile(filePath, encoded)
     end)
 
     if not writeSuccess then
-        warn("[SessionManager] Write to temp failed:", writeError)
-        return false, "Failed to write temporary file"
-    end
-
-    local verifySuccess, verifyData = pcall(function()
-        return readfile(tempPath)
-    end)
-
-    if not verifySuccess or verifyData ~= encoded then
-
-        pcall(function() if isfile(tempPath) then delfile(tempPath) end end)
-
-        warn("[SessionManager] Temp file verification failed")
-        return false, "File verification failed"
-    end
-
-    local renameSuccess = pcall(function()
-
-        if isfile(filePath) then delfile(filePath) end
-
-        writefile(filePath, encoded)
-
-        if isfile(tempPath) then delfile(tempPath) end
-    end)
-
-    if not renameSuccess then
-        warn("[SessionManager] Atomic rename failed")
-
-        self:RestoreFromBackup(filePath)
-        return false, "Failed to finalize save"
-    end
-
-    local finalVerifySuccess, finalContent = pcall(function()
-        return readfile(filePath)
-    end)
-
-    if not finalVerifySuccess or finalContent ~= encoded then
-        warn("[SessionManager] Final verification failed")
-        self:RestoreFromBackup(filePath)
-        return false, "Final verification failed"
+        warn("[SessionManager] Write failed:", writeError)
+        return false, "Failed to write file"
     end
 
     return true, nil
@@ -248,20 +147,7 @@ function SessionManager:Load(userId)
 
     if not readSuccess then
         warn("[SessionManager] Failed to read file:", fileContent)
-
-        local backupPath = filePath .. ".backup"
-        if isfile(backupPath) then
-            readSuccess, fileContent = pcall(function()
-                return readfile(backupPath)
-            end)
-
-            if readSuccess then
-
-                pcall(function() writefile(filePath, fileContent) end)
-            end
-        end
-
-        if not readSuccess then return nil, "Failed to read file" end
+        return nil, "Failed to read file"
     end
 
     local decodeSuccess, sessionData = pcall(function()
@@ -270,23 +156,7 @@ function SessionManager:Load(userId)
 
     if not decodeSuccess then
         warn("[SessionManager] Failed to decode JSON:", sessionData)
-
-        local backupPath = filePath .. ".backup"
-        if isfile(backupPath) then
-            local backupSuccess, backupContent = pcall(function()
-                return readfile(backupPath)
-            end)
-
-            if backupSuccess then
-                decodeSuccess, sessionData = pcall(function()
-                    return HttpService:JSONDecode(backupContent)
-                end)
-            end
-        end
-
-        if not decodeSuccess then
-            return nil, "File corrupted and no valid backup"
-        end
+        return nil, "File corrupted"
     end
 
     if not sessionData or not sessionData.data then
@@ -314,12 +184,7 @@ function SessionManager:Delete(userId)
 
     if not isfile(filePath) then return false, "No session file found" end
 
-    local success = pcall(function()
-        delfile(filePath)
-
-        local backupPath = filePath .. ".backup"
-        if isfile(backupPath) then delfile(backupPath) end
-    end)
+    local success = pcall(function() delfile(filePath) end)
 
     if success then
         return true, nil
@@ -367,7 +232,6 @@ function SessionManager:StopAutoSave()
         self.AutoSaveThread = nil
         self.CurrentUserId = nil
         self.GetDataCallback = nil
-
         task.wait(0.1)
     end
 end
